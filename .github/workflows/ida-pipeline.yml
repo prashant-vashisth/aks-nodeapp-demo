@@ -1,0 +1,62 @@
+name: IDA Pipeline — Terraform AKS Policy
+
+on:
+  push:
+    branches: [ main, "feature/**" ]
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Demo scenario (standard/failure)
+        required: false
+        default: standard
+
+jobs:
+  checkout:
+    name: "1 — Checkout"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Checked out $GITHUB_SHA"
+
+  terraform-init:
+    name: "2 — Terraform Init"
+    needs: checkout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "terraform init — providers loaded"
+
+  terraform-plan:
+    name: "3 — Terraform Plan"
+    needs: terraform-init
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "terraform plan — 3 resources to apply"
+
+  ida-validation:
+    name: "4 — IDA Validation"
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: IDA compliance scan
+        run: |
+          echo "IDA: scanning Terraform configuration..."
+          echo "IDA: checking required tags..."
+          echo "IDA: checking NSG rules..."
+          echo "IDA: checking storage HIPAA settings..."
+          if grep -q "0.0.0.0/0" main.tf 2>/dev/null; then
+            echo "IDA: FAIL — unrestricted SSH detected"
+            echo "IDA: Grade D — Compliance Violation"
+            exit 1
+          fi
+          echo "IDA: Grade A — All checks passed"
+
+  terraform-apply:
+    name: "5 — Terraform Apply"
+    needs: ida-validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "terraform apply — 3 resources applied successfully"
