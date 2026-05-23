@@ -1,0 +1,54 @@
+name: Build & Deploy to AKS
+
+on:
+  push:
+    branches: [main]
+    paths: ['app/**']
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Deployment reason'
+        default: 'Manual deploy'
+
+env:
+  ACR_NAME: humanaaksacr
+  CLUSTER_NAME: humana-prod-aks
+  RESOURCE_GROUP: humana-aks-rg
+  IMAGE_NAME: humana-member-portal
+  NAMESPACE: claims-processing
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR Login
+        run: az acr login --name $ACR_NAME
+
+      - name: Build & Push Docker Image
+        run: |
+          cd app
+          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }} .
+          docker tag  $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}                       $ACR_NAME.azurecr.io/$IMAGE_NAME:latest
+          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ github.sha }}
+          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:latest
+
+      - name: Deploy to AKS
+        uses: azure/k8s-deploy@v4
+        with:
+          action: deploy
+          resource-group: ${{ env.RESOURCE_GROUP }}
+          name: ${{ env.CLUSTER_NAME }}
+          namespace: ${{ env.NAMESPACE }}
+          manifests: |
+            k8s/namespace.yaml
+            k8s/deployment.yaml
+            k8s/service.yaml
+          images: |
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
