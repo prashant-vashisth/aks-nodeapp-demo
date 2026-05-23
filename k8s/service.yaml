@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: humana-member-portal
+  namespace: claims-processing
+  labels:
+    app: humana-member-portal
+spec:
+  type: LoadBalancer
+  selector:
+    app: humana-member-portal
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
