@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: claims-processing
+  labels:
+    team: platform-engineering
+    hipaa: "true"
