@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: humana-member-portal
+  namespace: claims-processing
+  labels:
+    app: humana-member-portal
+    version: "1.2.0"
+    team: platform-engineering
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: humana-member-portal
+  template:
+    metadata:
+      labels:
+        app: humana-member-portal
+    spec:
+      containers:
+        - name: member-portal
+          image: humanaaksacr.azurecr.io/humana-member-portal:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+          livenessProbe:
+            httpGet: { path: /health, port: 3000 }
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet: { path: /health, port: 3000 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
