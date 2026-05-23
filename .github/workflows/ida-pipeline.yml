@@ -10,12 +10,17 @@ on:
         required: false
         default: standard
 
+permissions:
+  contents: read
+
 jobs:
   checkout:
     name: "1 — Checkout"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "Checked out $GITHUB_SHA"
 
   terraform-init:
@@ -24,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "terraform init — providers loaded"
 
   terraform-plan:
@@ -32,6 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "terraform plan — 3 resources to apply"
 
   ida-validation:
@@ -40,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: IDA compliance scan
         run: |
           echo "IDA: scanning Terraform configuration..."
@@ -59,4 +70,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "terraform apply — 3 resources applied successfully"
